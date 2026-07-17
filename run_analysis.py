@@ -7,10 +7,12 @@ from pathlib import Path
 import cv2
 
 from src.recorder import DataRecorder
+from src.recorder import VideoRecorder
 from src.trainer import ModelTrainer
 from src.vision.debug_overlay import DebugOverlay
 from src.vision.offline_analyzer import OfflineAnalyzer
 from src.vision.performance_monitor import PerformanceMonitor
+from src.core.config import load_config
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -74,6 +76,28 @@ def record(args: argparse.Namespace) -> int:
     return 0
 
 
+def record_video(args: argparse.Namespace) -> int:
+    config = load_config(PROJECT_ROOT / "config.yaml")
+    fps = args.fps if args.fps is not None else float(config.get("recorder.video_fps", 5))
+    duration = args.duration if args.duration is not None else float(config.get("recorder.default_duration", 60))
+
+    recorder = VideoRecorder(PROJECT_ROOT / "training_data")
+    print(f"Video frame kaydi basladi: label={args.label}, duration={duration}, fps={fps}")
+    saved_paths = recorder.start_recording(args.label, duration=duration, fps=fps)
+    print(
+        json.dumps(
+            {
+                "label": args.label,
+                "frame_count": len(saved_paths),
+                "output_dir": str(PROJECT_ROOT / "training_data" / "images"),
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+    return 0
+
+
 def train(args: argparse.Namespace) -> int:
     trainer = ModelTrainer(project_root=PROJECT_ROOT)
     result = trainer.train(
@@ -114,6 +138,12 @@ def build_parser() -> argparse.ArgumentParser:
     record_parser = subparsers.add_parser("record", help="Ekran goruntusu kaydet")
     record_parser.add_argument("--label", required=True)
     record_parser.set_defaults(func=record)
+
+    video_parser = subparsers.add_parser("record-video", help="Belirli FPS ile frame kaydi yap")
+    video_parser.add_argument("--label", required=True)
+    video_parser.add_argument("--duration", type=float, default=None)
+    video_parser.add_argument("--fps", type=float, default=None)
+    video_parser.set_defaults(func=record_video)
 
     train_parser = subparsers.add_parser("train", help="YOLO model egitimi baslat")
     train_parser.add_argument("--epochs", type=int, default=50)

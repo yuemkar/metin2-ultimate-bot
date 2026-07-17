@@ -51,6 +51,14 @@ Ekran goruntusu kaydi:
 python run_analysis.py record --label surgun
 ```
 
+Video/frame kaydi:
+
+```powershell
+python run_analysis.py record-video --label surgun --duration 60 --fps 5
+```
+
+Bu komut belirtilen sure boyunca ekran frame'lerini bellekte toplar ve kayit bittiginde `training_data\images` altina PNG olarak yazar. Varsayilan degerler `config.yaml` icindeki `recorder.video_fps` ve `recorder.default_duration` alanlarindan gelir.
+
 YOLO egitimi:
 
 ```powershell

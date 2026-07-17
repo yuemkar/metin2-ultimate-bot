@@ -36,6 +36,10 @@ input:
 stats:
   save_interval_sec: 10
 
+recorder:
+  video_fps: 5
+  default_duration: 60
+
 analysis:
   hp_tracking:
     enabled: false
