@@ -1,0 +1,51 @@
+app:
+  title: "Metin2 Ultimate Automation"
+  tick_interval_ms: 80
+  print_interval_sec: 1.0
+  debug_frame_path: "debug_frame.jpg"
+  save_debug_frame: true
+
+capture:
+  region:
+    left: 0
+    top: 0
+    width: 1280
+    height: 720
+
+detection:
+  mode: "color" # color, yolo, hybrid
+  min_area: 80
+  click_cooldown_ms: 450
+  hsv_ranges:
+    - name: "target_red"
+      lower: [0, 120, 120]
+      upper: [10, 255, 255]
+    - name: "target_red_wrap"
+      lower: [170, 120, 120]
+      upper: [180, 255, 255]
+  yolo:
+    enabled: false
+    model_path: "models/yolov8n.pt"
+    confidence: 0.45
+    classes: []
+
+input:
+  click_enabled: true
+  move_before_click: true
+
+stats:
+  save_interval_sec: 10
+
+analysis:
+  hp_tracking:
+    enabled: false
+    template_path: "templates/hp_template.png"
+  target_queue:
+    enabled: false
+    max_size: 10
+
+window:
+  auto_detect: true
+  process_name: "Metin2.exe"
+  window_title: "Metin2"
+  auto_focus: true
