@@ -45,7 +45,7 @@ class OfflineAnalyzer:
         self.ocr_reader = ocr_reader
         self.last_metadata: list[dict[str, object]] = []
 
-    def analyze_image(self, image_path: str | Path) -> list[Detection]:
+    def analyze_image(self, image_path: str | Path, auto_label: bool = False, class_id: int = 0) -> list[Detection]:
         image_path = Path(image_path)
         image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
         if image is None:
@@ -61,7 +61,55 @@ class OfflineAnalyzer:
             for region in regions
         ]
         self.last_metadata = [self._detection_to_dict(detection, image) for detection in detections]
+        if auto_label:
+            self.write_yolo_labels(image_path, detections, image.shape, class_id=class_id)
         return detections
+
+    def auto_label_folder(self, folder_path: str | Path, class_id: int = 0) -> dict[str, object]:
+        folder = Path(folder_path)
+        folder.mkdir(parents=True, exist_ok=True)
+        image_paths = [
+            path
+            for path in sorted(folder.iterdir())
+            if path.suffix.lower() in {".png", ".jpg", ".jpeg", ".bmp", ".webp"}
+        ]
+        labeled = []
+        for image_path in image_paths:
+            detections = self.analyze_image(image_path, auto_label=True, class_id=class_id)
+            labeled.append({"image_path": str(image_path), "label_count": len(detections)})
+        return {
+            "folder_path": str(folder),
+            "image_count": len(image_paths),
+            "labeled_images": labeled,
+        }
+
+    def write_yolo_labels(
+        self,
+        image_path: str | Path,
+        detections: list[Detection],
+        image_shape: tuple[int, ...],
+        class_id: int = 0,
+    ) -> Path:
+        image_path = Path(image_path)
+        labels_dir = image_path.parent.parent / "labels" if image_path.parent.name == "images" else image_path.parent
+        labels_dir.mkdir(parents=True, exist_ok=True)
+        label_path = labels_dir / f"{image_path.stem}.txt"
+        height, width = image_shape[:2]
+
+        lines = []
+        for detection in detections:
+            x, y, box_width, box_height = detection.bbox
+            x_center = (x + box_width / 2) / width
+            y_center = (y + box_height / 2) / height
+            normalized_width = box_width / width
+            normalized_height = box_height / height
+            lines.append(
+                f"{class_id} {x_center:.6f} {y_center:.6f} "
+                f"{normalized_width:.6f} {normalized_height:.6f}"
+            )
+
+        label_path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
+        return label_path
 
     def batch_analyze(self, folder_path: str | Path) -> dict[str, object]:
         folder = Path(folder_path)

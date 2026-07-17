@@ -69,6 +69,16 @@ def batch_analyze(args: argparse.Namespace) -> int:
     return 0
 
 
+def auto_label(args: argparse.Namespace) -> int:
+    analyzer = OfflineAnalyzer(color_profile=args.color_profile)
+    images_dir = PROJECT_ROOT / "training_data" / "images"
+    report = analyzer.auto_label_folder(images_dir, class_id=0)
+    report["label"] = args.label
+    report["labels_dir"] = str(PROJECT_ROOT / "training_data" / "labels")
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+    return 0
+
+
 def record(args: argparse.Namespace) -> int:
     recorder = DataRecorder(PROJECT_ROOT / "training_data")
     result = recorder.capture_and_save(args.label)
@@ -134,6 +144,11 @@ def build_parser() -> argparse.ArgumentParser:
     batch_parser.add_argument("folder_path")
     batch_parser.add_argument("--color-profile", default="red", choices=["red", "blue", "green"])
     batch_parser.set_defaults(func=batch_analyze)
+
+    auto_label_parser = subparsers.add_parser("auto-label", help="Goruntuler icin YOLO .txt etiketleri uret")
+    auto_label_parser.add_argument("--label", default="surgun")
+    auto_label_parser.add_argument("--color-profile", default="red", choices=["red", "blue", "green"])
+    auto_label_parser.set_defaults(func=auto_label)
 
     record_parser = subparsers.add_parser("record", help="Ekran goruntusu kaydet")
     record_parser.add_argument("--label", required=True)

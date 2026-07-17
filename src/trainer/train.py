@@ -9,6 +9,8 @@ from typing import Any
 
 import yaml
 
+from src.vision.offline_analyzer import OfflineAnalyzer
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,7 +36,7 @@ class ModelTrainer:
         self.dataset_yaml = self.data_dir / "dataset.yaml"
 
     def create_dataset_yaml(self, class_names: list[str] | None = None) -> Path:
-        names = class_names or self._read_class_names() or ["metin"]
+        names = class_names or self._read_class_names() or ["surgun"]
         self.data_dir.mkdir(parents=True, exist_ok=True)
         (self.data_dir / "images").mkdir(parents=True, exist_ok=True)
         (self.data_dir / "labels").mkdir(parents=True, exist_ok=True)
@@ -51,6 +53,25 @@ class ModelTrainer:
         )
         return self.dataset_yaml
 
+    def prepare_dataset(self, class_names: list[str] | None = None, auto_label: bool = True) -> Path:
+        names = class_names or ["surgun"]
+        self.create_dataset_yaml(names)
+        images_dir = self.data_dir / "images"
+        labels_dir = self.data_dir / "labels"
+        images_dir.mkdir(parents=True, exist_ok=True)
+        labels_dir.mkdir(parents=True, exist_ok=True)
+
+        if auto_label:
+            analyzer = OfflineAnalyzer()
+            for image_path in sorted(images_dir.iterdir()):
+                if image_path.suffix.lower() not in {".png", ".jpg", ".jpeg", ".bmp", ".webp"}:
+                    continue
+                label_path = labels_dir / f"{image_path.stem}.txt"
+                if not label_path.exists():
+                    analyzer.analyze_image(image_path, auto_label=True, class_id=0)
+
+        return self.dataset_yaml
+
     def train(
         self,
         base_model: str | Path = "yolov8n.pt",
@@ -58,7 +79,7 @@ class ModelTrainer:
         imgsz: int = 640,
         class_names: list[str] | None = None,
     ) -> TrainingResult:
-        dataset_yaml = self.create_dataset_yaml(class_names)
+        dataset_yaml = self.prepare_dataset(class_names or ["surgun"], auto_label=True)
         self._validate_dataset()
 
         from ultralytics import YOLO

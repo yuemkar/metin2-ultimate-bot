@@ -40,6 +40,10 @@ recorder:
   video_fps: 5
   default_duration: 60
 
+training:
+  auto_label: true
+  default_class: "surgun"
+
 analysis:
   hp_tracking:
     enabled: false

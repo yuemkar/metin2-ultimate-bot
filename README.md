@@ -45,6 +45,14 @@ Klasor analizi:
 python run_analysis.py batch-analyze training_data\images
 ```
 
+Otomatik YOLO etiketi olusturma:
+
+```powershell
+python run_analysis.py auto-label --label surgun
+```
+
+Bu komut `training_data\images` altindaki goruntuleri offline HSV/kontur analiziyle tarar ve eksik YOLO etiketlerini `training_data\labels` altina `.txt` olarak yazar. Varsayilan class id `0` ve sinif adi `surgun` olarak ayarlanmistir.
+
 Ekran goruntusu kaydi:
 
 ```powershell
