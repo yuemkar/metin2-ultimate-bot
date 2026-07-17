@@ -146,6 +146,35 @@ class DataRecorder:
         text_regions = [self._box_to_metadata(item) for item in detections]
         return self.save_metadata_with_boxes(image_bgr, label, text_regions)
 
+    def capture_with_metadata(
+        self,
+        label: str,
+        analyzer: Any | None = None,
+        ocr_reader: Any | None = None,
+        region: dict[str, int] | None = None,
+    ) -> RecordResult:
+        """Capture an image and persist passive analysis/OCR metadata when enabled."""
+
+        image_bgr = self.capture_screen(region)
+        text_regions: list[dict[str, Any]] = []
+
+        if analyzer is not None:
+            if hasattr(analyzer, "_find_text_regions"):
+                boxes = analyzer._find_text_regions(image_bgr)
+                text_regions = [self._box_to_metadata(item) for item in boxes]
+            if getattr(analyzer, "last_metadata", None):
+                text_regions = list(analyzer.last_metadata)
+
+        if ocr_reader is not None and getattr(ocr_reader, "enabled", False):
+            for item in text_regions:
+                x, y, width, height = [int(value) for value in item.get("bbox", (0, 0, 0, 0))]
+                roi = image_bgr[y : y + height, x : x + width]
+                text = ocr_reader.read_text(roi)
+                item["ocr_text"] = text
+                item["ocr_keyword_match"] = ocr_reader.contains_keyword(text)
+
+        return self.save_with_metadata(image_bgr, label, text_regions)
+
     def save_metadata_with_boxes(
         self,
         image_bgr: np.ndarray,

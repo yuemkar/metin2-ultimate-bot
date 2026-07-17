@@ -78,6 +78,32 @@ Ana ayarlar [config.yaml](config.yaml) icindedir:
 
 YOLO modunu kullanmak icin `detection.mode` degerini `yolo` veya `hybrid` yapin. `ultralytics` ilk calismada model dosyasini indirebilir; isterseniz modeli `models/yolov8n.pt` konumuna elle koyabilirsiniz.
 
+## OCR Kurulumu
+
+OCR destegi Tesseract motoru ve Python tarafinda `pytesseract`/`Pillow` paketleri ile calisir. Python paketleri `requirements.txt` icindedir:
+
+```powershell
+pip install -r requirements.txt
+```
+
+Windows icin Tesseract motorunu ayrica kurmaniz gerekir:
+
+1. Tesseract dokumantasyonundaki Windows kurulum notlarini okuyun: https://tesseract-ocr.github.io/tessdoc/Installation.html
+2. Windows installer icin UB Mannheim paketleri kullanilir: https://github.com/UB-Mannheim/tesseract/wiki
+3. Kurulumdan sonra `C:\Program Files\Tesseract-OCR` klasorunu PATH degiskenine ekleyin.
+4. Turkish OCR icin `tur.traineddata` dosyasinin `tessdata` klasorunde oldugunu kontrol edin.
+
+Kontrol:
+
+```powershell
+tesseract --version
+python -c "import pytesseract; print(pytesseract.get_tesseract_version())"
+```
+
+OCR ayarlari `config.yaml` icindeki `ocr` bolumundedir ve varsayilan olarak `enabled: false` gelir. `OCRReader`, `OfflineAnalyzer` ve `DataRecorder.capture_with_metadata()` ile birlikte kullanildiginda kayitli goruntu bolgelerinden metin okur ve metadata uretir. Tesseract kurulu degilse hata firlatmadan pasif kalir.
+
+Ayrintili rehber: [docs/OCR_GUIDE.md](docs/OCR_GUIDE.md)
+
 ## EXE Uretimi
 
 ```powershell

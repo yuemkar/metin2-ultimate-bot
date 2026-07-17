@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 
 from src.vision.detector import Detection
+from src.vision.ocr_reader import OCRReader
 
 
 @dataclass(frozen=True)
@@ -34,12 +35,15 @@ class OfflineAnalyzer:
         max_area: int = 25000,
         min_aspect: float = 0.2,
         max_aspect: float = 5.0,
+        ocr_reader: OCRReader | None = None,
     ) -> None:
         self.color_profile = color_profile
         self.min_area = min_area
         self.max_area = max_area
         self.min_aspect = min_aspect
         self.max_aspect = max_aspect
+        self.ocr_reader = ocr_reader
+        self.last_metadata: list[dict[str, object]] = []
 
     def analyze_image(self, image_path: str | Path) -> list[Detection]:
         image_path = Path(image_path)
@@ -48,7 +52,7 @@ class OfflineAnalyzer:
             raise FileNotFoundError(f"Goruntu okunamadi: {image_path}")
 
         regions = self._find_text_regions(image)
-        return [
+        detections = [
             Detection(
                 label="offline_text_region",
                 confidence=min(1.0, region.area / 5000.0),
@@ -56,6 +60,8 @@ class OfflineAnalyzer:
             )
             for region in regions
         ]
+        self.last_metadata = [self._detection_to_dict(detection, image) for detection in detections]
+        return detections
 
     def batch_analyze(self, folder_path: str | Path) -> dict[str, object]:
         folder = Path(folder_path)
@@ -71,7 +77,7 @@ class OfflineAnalyzer:
         for image_path in image_paths:
             try:
                 detections = self.analyze_image(image_path)
-                regions = [self._detection_to_dict(detection) for detection in detections]
+                regions = [self._metadata_for_detection(index, detection) for index, detection in enumerate(detections)]
                 results.append({"image_path": str(image_path), "detections": regions, "error": None})
             except Exception as exc:  # noqa: BLE001
                 results.append({"image_path": str(image_path), "detections": [], "error": str(exc)})
@@ -88,13 +94,25 @@ class OfflineAnalyzer:
         report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         return report
 
-    def _detection_to_dict(self, detection: Detection) -> dict[str, object]:
-        return {
+    def _detection_to_dict(self, detection: Detection, image_bgr: np.ndarray | None = None) -> dict[str, object]:
+        payload = {
             "label": detection.label,
             "confidence": detection.confidence,
             "bbox": detection.bbox,
             "center": detection.center,
         }
+        if self.ocr_reader and self.ocr_reader.enabled and image_bgr is not None:
+            x, y, width, height = detection.bbox
+            roi = image_bgr[y : y + height, x : x + width]
+            text = self.ocr_reader.read_text(roi)
+            payload["ocr_text"] = text
+            payload["ocr_keyword_match"] = self.ocr_reader.contains_keyword(text)
+        return payload
+
+    def _metadata_for_detection(self, index: int, detection: Detection) -> dict[str, object]:
+        if index < len(self.last_metadata):
+            return self.last_metadata[index]
+        return self._detection_to_dict(detection)
 
     def _find_text_regions(self, image_bgr: np.ndarray) -> list[OfflineRegion]:
         hsv = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2HSV)
