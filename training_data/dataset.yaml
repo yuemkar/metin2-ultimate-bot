@@ -2,4 +2,6 @@ path: .
 train: images
 val: images
 names:
-  0: metin
+  0: surgun
+  1: kizil
+  2: golge

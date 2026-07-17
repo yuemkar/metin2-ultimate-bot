@@ -51,7 +51,8 @@ class AnalysisSettings(QWidget):
 
     def save_settings(self) -> None:
         config = self._read_config()
-        offline = config.setdefault("offline_analysis", {})
+        offline = config.setdefault("analysis_settings", {})
+        offline["offline_mode"] = True
         offline["color_profile"] = self.profile_combo.currentText()
         offline["wait_seconds"] = float(self.wait_spin.value())
         offline["live_input_enabled"] = False
@@ -65,7 +66,7 @@ class AnalysisSettings(QWidget):
 
     def load_settings(self) -> None:
         config = self._read_config()
-        offline = config.get("offline_analysis", {})
+        offline = config.get("analysis_settings", {})
         profile = str(offline.get("color_profile", "red"))
         index = self.profile_combo.findText(profile)
         if index >= 0:

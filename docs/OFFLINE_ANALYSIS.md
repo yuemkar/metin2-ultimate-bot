@@ -32,6 +32,15 @@ Varsayilan profiller:
 - `blue`: mavi tonlari
 - `green`: yesil tonlari
 
+`config.yaml` icinde offline varsayilanlar `analysis_settings` altinda tutulur:
+
+```yaml
+analysis_settings:
+  offline_mode: true
+  color_profile: "red"
+  wait_seconds: 0.5
+```
+
 Dar veya genis tespit icin `min_area`, `max_area`, `min_aspect` ve `max_aspect` degerleri `OfflineAnalyzer` olusturulurken ayarlanabilir.
 
 ```python
@@ -81,16 +90,74 @@ monitor.log_performance()
 
 ## CLI Kullanim
 
+Offline analiz icin onerilen giris noktasi proje kokundeki `run_analysis.py` dosyasidir.
+
 Tek goruntu:
 
 ```powershell
-python main.py --analyze training_data/images/sample.png
+python run_analysis.py analyze-image training_data/images/sample.png
+```
+
+Debug gorseli ile tek goruntu:
+
+```powershell
+python run_analysis.py analyze-image training_data/images/sample.png --debug
 ```
 
 Klasor:
 
 ```powershell
-python main.py --analyze training_data/images
+python run_analysis.py batch-analyze training_data/images
+```
+
+Kayit:
+
+```powershell
+python run_analysis.py record --label surgun
+```
+
+Egitim:
+
+```powershell
+python run_analysis.py train --epochs 50 --imgsz 640
+```
+
+GUI:
+
+```powershell
+python run_analysis.py gui
+```
+
+`main.py --analyze` geriye uyumluluk icin korunur, ancak yeni offline is akisinda `run_analysis.py` kullanilmalidir.
+
+## Ornek Cikti
+
+Tek goruntu analizi JSON formatinda Detection bilgilerini yazar:
+
+```json
+{
+  "image_path": "training_data/images/sample.png",
+  "detections": [
+    {
+      "label": "offline_text_region",
+      "confidence": 0.82,
+      "bbox": [120, 88, 64, 42],
+      "center": [152, 109]
+    }
+  ],
+  "debug_image": "training_data/debug/sample_debug.png"
+}
+```
+
+Toplu analiz, analiz edilen klasore `offline_analysis_report.json` yazar:
+
+```json
+{
+  "image_count": 12,
+  "total_detections": 31,
+  "total_regions": 31,
+  "results": []
+}
 ```
 
 ## Metadata Ile Kaydetme

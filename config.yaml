@@ -30,7 +30,7 @@ detection:
     classes: []
 
 input:
-  click_enabled: true
+  click_enabled: false
   move_before_click: true
 
 stats:
@@ -49,3 +49,20 @@ window:
   process_name: "Metin2.exe"
   window_title: "Metin2"
   auto_focus: true
+
+analysis_settings:
+  offline_mode: true
+  color_profile: "red"
+  wait_seconds: 0.5
+  color_profiles:
+    red:
+      - lower: [0, 100, 80]
+        upper: [12, 255, 255]
+      - lower: [168, 100, 80]
+        upper: [180, 255, 255]
+    blue:
+      - lower: [90, 80, 70]
+        upper: [130, 255, 255]
+    green:
+      - lower: [40, 70, 60]
+        upper: [85, 255, 255]
