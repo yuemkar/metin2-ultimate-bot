@@ -2,12 +2,21 @@
 import os
 import time
 import json
+from datetime import datetime
 import cv2
 import numpy as np
 import win32gui
 import win32ui
 import win32con
 import win32api
+
+
+class RecordResult:
+    def __init__(self, image_path: str, label: str, timestamp: str):
+        self.image_path = image_path
+        self.label = label
+        self.timestamp = timestamp
+
 
 class DataRecorder:
     def __init__(self, output_dir: str = "training_data"):
@@ -67,7 +76,11 @@ class DataRecorder:
         self.metadata.append(metadata_entry)
         with open(self.metadata_path, "w") as f:
             json.dump(self.metadata, f, indent=2)
-        return metadata_entry
+        return RecordResult(
+            image_path=filepath,
+            label=label,
+            timestamp=timestamp
+        )
 
     def start_recording(self, label: str, region=None):
         print(f"🔴 Kayıt başladı: {label}")
